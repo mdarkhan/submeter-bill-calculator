@@ -50,8 +50,9 @@ body {
 .wrap { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 header h1 { font-size: 1.75rem; line-height: 1.3; margin: 0 0 4px; font-weight: 700; text-wrap: balance; }
 header p { margin: 0; color: var(--muted); max-width: 62ch; }
-.sample { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: .9rem; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-.sample button { font: inherit; font-size: .88rem; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 6px; padding: 2px 10px; cursor: pointer; }
+.head { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; }
+.head > div { min-width: 0; }
+.head .btn { flex-shrink: 0; }
 .grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
@@ -109,15 +110,13 @@ img{max-width:100%}
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>সাবমিটার বিল ক্যালকুলেটর</h1>
-    <p>DPDC প্রিপেইড মিটারের মাসিক খরচ থেকে ভাড়াটিয়ার ন্যায্য বিদ্যুৎ বিল বের করুন। টিয়ার আর ফিক্সড চার্জ আলাদা করে গুনতে হয় না।</p>
+  <header class="head">
+    <div>
+      <h1>সাবমিটার বিল ক্যালকুলেটর</h1>
+      <p>মিটারের মাসিক খরচ থেকে ভাড়াটিয়ার ন্যায্য বিদ্যুৎ বিল বের করুন। টিয়ার আর ফিক্সড চার্জ আলাদা করে গুনতে হয় না।</p>
+    </div>
+    <button type="button" class="btn ghost" id="resetBtn">রিসেট</button>
   </header>
-
-  <div class="sample" id="sampleBar">
-    <span>এখন বসানো মেইন মিটারের সংখ্যা আপনার প্যানেলের ২–১৮ অক্টোবরের। ভাড়াটিয়ার ইউনিট নমুনা।</span>
-    <button type="button" id="clearBtn">ফাঁকা করে নিজের সংখ্যা দিন</button>
-  </div>
 
   <div class="grid">
     <section class="card" aria-labelledby="inH">
@@ -125,26 +124,26 @@ img{max-width:100%}
 
       <div class="field">
         <label for="month">মাস</label>
-        <input type="text" id="month" value="অক্টোবর ২০২৬" autocomplete="off">
+        <input type="text" id="month" placeholder="যেমন: অক্টোবর ২০২৬ বা ১–৪ নভেম্বর" autocomplete="off">
       </div>
       <div class="field">
         <label for="mainUnits">মেইন মিটারের মোট ইউনিট (kWh)</label>
-        <input type="number" id="mainUnits" inputmode="decimal" step="any" min="0" value="52.05">
+        <input type="number" id="mainUnits" inputmode="decimal" step="any" min="0">
         <span class="hint">DPDC অ্যাপ, Billing History, Charges, Last Month। Usage কলামের সব এন্ট্রির যোগফল।</span>
       </div>
       <div class="field">
         <label for="panelTotal">প্যানেল থেকে কাটা মোট টাকা (৳)</label>
-        <input type="number" id="panelTotal" inputmode="decimal" step="any" min="0" value="397.78">
+        <input type="number" id="panelTotal" inputmode="decimal" step="any" min="0">
         <span class="hint">একই এন্ট্রিগুলোর Amount কলামের যোগফল। ডিমান্ড চার্জ আর মিটার ভাড়াসহ।</span>
       </div>
       <div class="field">
         <label for="tenantUnits">ভাড়াটিয়ার সাবমিটারের ইউনিট (kWh)</label>
-        <input type="number" id="tenantUnits" inputmode="decimal" step="any" min="0" value="18">
+        <input type="number" id="tenantUnits" inputmode="decimal" step="any" min="0">
         <span class="hint">মাস শেষের রিডিং থেকে মাস শুরুর রিডিং বিয়োগ।</span>
       </div>
       <div class="field" id="fixedField" hidden>
         <label for="fixed">এই সময়ে কাটা ফিক্সড চার্জ (৳)</label>
-        <input type="number" id="fixed" inputmode="decimal" step="any" min="0" value="124">
+        <input type="number" id="fixed" inputmode="decimal" step="any" min="0">
         <span class="hint">ডিমান্ড চার্জ ৮৪ (২ কিলোওয়াট × ৪২) আর মিটার ভাড়া ৪০, মোট ১২৪, মাসে একবার কাটে। তারিখ বদলাতে পারে, তাই দৈনিক এন্ট্রিতে যতবার কাটা দেখছেন তত দিন। কাটা না পড়লে ০।</span>
       </div>
 
@@ -171,7 +170,7 @@ img{max-width:100%}
     <div id="slabNote"></div>
   </section>
 
-  <footer>ট্যারিফ সূত্র: <a href="https://www.thedailystar.net/news/environment/natural-resources/energy/news/berc-withdraws-electricity-price-hike-low-use-residential-consumers-4190646" target="_blank" rel="noopener">The Daily Star</a>, <a href="https://bangla.bdnews24.com/business/a92eb5b600a5" target="_blank" rel="noopener">bdnews24</a>, <a href="https://www.ittefaq.com.bd/791781/%E0%A6%AC%E0%A6%BF%E0%A6%A6%E0%A7%8D%E0%A6%AF%E0%A7%81%E0%A6%A4%E0%A7%87%E0%A6%B0-%E0%A6%A8%E0%A6%A4%E0%A7%81%E0%A6%A8-%E0%A6%AE%E0%A7%82%E0%A6%B2%E0%A7%8D%E0%A6%AF%E0%A6%B9%E0%A6%BE%E0%A6%B0-%E0%A6%98%E0%A7%8B%E0%A6%B7%E0%A6%A3%E0%A6%BE-%E0%A6%97%E0%A7%8D%E0%A6%B0%E0%A6%BE%E0%A6%B9%E0%A6%95-%E0%A6%AA%E0%A6%B0%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A7%9F%E0%A7%87" target="_blank" rel="noopener">ইত্তেফাক</a>। এটি আইনি বা আর্থিক পরামর্শ নয়।</footer>
+  <footer>ট্যারিফ সূত্র: <a href="https://www.thedailystar.net/news/environment/natural-resources/energy/news/berc-withdraws-electricity-price-hike-low-use-residential-consumers-4190646" target="_blank" rel="noopener">The Daily Star</a>, <a href="https://bangla.bdnews24.com/business/a92eb5b600a5" target="_blank" rel="noopener">bdnews24</a>, <a href="https://www.ittefaq.com.bd/791781/%E0%A6%AC%E0%A6%BF%E0%A6%A6%E0%A7%8D%E0%A6%AF%E0%A7%81%E0%A6%A4%E0%A7%87%E0%A6%B0-%E0%A6%A8%E0%A6%A4%E0%A7%81%E0%A6%A8-%E0%A6%AE%E0%A7%82%E0%A6%B2%E0%A7%8D%E0%A6%AF%E0%A6%B9%E0%A6%BE%E0%A6%B0-%E0%A6%98%E0%A7%8B%E0%A6%B7%E0%A6%A3%E0%A6%BE-%E0%A6%97%E0%A7%8D%E0%A6%B0%E0%A6%BE%E0%A6%B9%E0%A6%95-%E0%A6%AA%E0%A6%B0%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A7%9F%E0%A7%87" target="_blank" rel="noopener">ইত্তেফাক</a>। এটি আইনি বা আর্থিক পরামর্শ নয়।<br>ডেভেলপার: Md Arafat Rahman</footer>
 </div>
 
 <script>
@@ -181,7 +180,6 @@ img{max-width:100%}
   var CAPS = [75, 200, 300, 400, 600, Infinity];
   var DEFAULT_RATES = { life: 4.63, slabs: [5.26, 8.5, 9.1, 9.62, 15.01, 17.35] };
   var rates = DEFAULT_RATES;
-  var KEY = 'submeter-bill-v1';
   var FIELDS = ['month', 'mainUnits', 'panelTotal', 'tenantUnits', 'fixed'];
 
   function num(v) { var n = parseFloat(v); return isFinite(n) && n >= 0 ? n : 0; }
@@ -238,10 +236,6 @@ img{max-width:100%}
     var ownUnits = main - tenant;
     var ownCost = panel - tTotal;
 
-    var impliedFixed = Math.max(0, panel - energy(main).total);
-    var sepTotal = energy(tenant).total + (useFixed ? tFixed : impliedFixed * share);
-    var gap = tTotal - sepTotal;
-
     var html = '';
     html += '<div class="big">৳' + rounded.toLocaleString('en-US') + '</div>';
     html += '<div class="sub">হিসাবে ' + money(tTotal) + '। নিকটতম টাকায় ধরা হয়েছে।</div>';
@@ -262,9 +256,6 @@ img{max-width:100%}
     if (useFixed && panel > 0 && panel < fixed) {
       html += '<div class="note warn">মোট টাকা ফিক্সড চার্জের চেয়ে কম। এই সময়ে ফিক্সড চার্জ কাটা না পড়লে ঘরে ০ দিন।</div>';
     }
-    if (gap > 0.5 && tenant > 0) {
-      html += '<div class="note info">ভাড়াটিয়াকে আলাদা গ্রাহক ধরে ০ থেকে টিয়ার গুনলে বিল হতো ' + money(sepTotal) + '। তাতে আপনার ' + money(gap) + ' লোকসান হতো।</div>';
-    }
     html += '<div class="actions"><button type="button" class="btn" id="copyBtn">বিলের লেখা কপি করুন</button><span class="hint" id="copyMsg" style="align-self:center"></span></div>';
     body.innerHTML = html;
 
@@ -276,7 +267,6 @@ img{max-width:100%}
         'মোট: ৳' + rounded.toLocaleString('en-US');
       copyText(txt);
     });
-    save();
   }
 
   function copyText(txt) {
@@ -321,30 +311,11 @@ img{max-width:100%}
       (main <= 50 ? '<div class="note info" style="margin-top:10px">মাসে ৫০ ইউনিট বা কম হলে পুরোটাই লাইফলাইন রেটে। ৫০ পার হলে পুরো ইউনিট ০–৭৫ টিয়ারের রেট থেকে ধরা হয়।</div>' : '');
   }
 
-  function save() {
-    try {
-      var data = { mode: document.querySelector('input[name=fixmode]:checked').value };
-      FIELDS.forEach(function (f) { data[f] = $(f).value; });
-      localStorage.setItem(KEY, JSON.stringify(data));
-    } catch (e) {}
-  }
-  function load() {
-    try {
-      var raw = localStorage.getItem(KEY);
-      if (!raw) return;
-      var d = JSON.parse(raw);
-      FIELDS.forEach(function (f) { if (typeof d[f] === 'string') $(f).value = d[f]; });
-      if (d.mode) { var r = document.querySelector('input[name=fixmode][value=' + d.mode + ']'); if (r) r.checked = true; }
-      if (d.mainUnits !== '52.05' || d.tenantUnits !== '18') $('sampleBar').hidden = true;
-    } catch (e) {}
-  }
-
-  load();
   FIELDS.forEach(function (f) { $(f).addEventListener('input', render); });
   document.querySelectorAll('input[name=fixmode]').forEach(function (r) { r.addEventListener('change', render); });
-  $('clearBtn').addEventListener('click', function () {
-    ['mainUnits', 'panelTotal', 'tenantUnits'].forEach(function (f) { $(f).value = ''; });
-    $('sampleBar').hidden = true;
+  $('resetBtn').addEventListener('click', function () {
+    FIELDS.forEach(function (f) { $(f).value = ''; });
+    document.querySelector('input[name=fixmode][value=share]').checked = true;
     $('mainUnits').focus();
     render();
   });
