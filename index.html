@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>সাবমিটার বিল ক্যালকুলেটর</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one worksheet. Inputs and live bill side by side on wide screens, stacked on phones; slab table and monthly routine below. */
+:root {
+  --bg: #EEF2F0;
+  --surface: #FFFFFF;
+  --surface-2: #F5F8F7;
+  --ink: #13211D;
+  --muted: #51635D;
+  --line: #D3DDD9;
+  --accent: #0E6B5C;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #D7ECE6;
+  --warn: #8A5200;
+  --warn-bg: #FBEFD5;
+  --ok: #1B6B3A;
+  --ok-bg: #DDF1E3;
+  --bad: #9E2B25;
+  --bad-bg: #F9E1DE;
+  --font-body: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, sans-serif;
+  --font-num: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1714; --surface: #15221E; --surface-2: #1B2B26; --ink: #E6F0EC; --muted: #9FB3AC;
+    --line: #2A413A; --accent: #4CC2A8; --accent-ink: #06201A; --accent-soft: #1A3A33;
+    --warn: #E3B055; --warn-bg: #33270E; --ok: #6FD08E; --ok-bg: #12301E; --bad: #F08C84; --bad-bg: #3A1815;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1714; --surface: #15221E; --surface-2: #1B2B26; --ink: #E6F0EC; --muted: #9FB3AC;
+  --line: #2A413A; --accent: #4CC2A8; --accent-ink: #06201A; --accent-soft: #1A3A33;
+  --warn: #E3B055; --warn-bg: #33270E; --ok: #6FD08E; --ok-bg: #12301E; --bad: #F08C84; --bad-bg: #3A1815;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.7;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header h1 { font-size: 1.75rem; line-height: 1.3; margin: 0 0 4px; font-weight: 700; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 62ch; }
+.sample { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: .9rem; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.sample button { font: inherit; font-size: .88rem; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 6px; padding: 2px 10px; cursor: pointer; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+.card h2 { font-size: 1.1rem; margin: 0 0 14px; font-weight: 600; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.field label, .legend { font-weight: 500; font-size: .95rem; }
+.hint { color: var(--muted); font-size: .84rem; line-height: 1.5; }
+input[type=text], input[type=number] {
+  font: inherit; font-family: var(--font-num); font-size: 1rem; color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; width: 100%; min-width: 0;
+}
+input[type=text] { font-family: var(--font-body); }
+input:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+fieldset { border: 0; padding: 0; margin: 0 0 4px; min-width: 0; }
+.radio { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; cursor: pointer; }
+.radio input { margin-top: 7px; accent-color: var(--accent); }
+.radio span small { display: block; color: var(--muted); font-size: .84rem; line-height: 1.5; }
+.result { position: relative; }
+.big { font-family: var(--font-num); font-size: 2.6rem; font-weight: 600; line-height: 1.1; color: var(--accent); margin: 2px 0 2px; letter-spacing: -0.02em; }
+.sub { color: var(--muted); font-size: .92rem; margin-bottom: 14px; }
+dl.lines { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+dl.lines dt { color: var(--muted); font-size: .95rem; }
+dl.lines dd { margin: 0; font-family: var(--font-num); font-variant-numeric: tabular-nums; text-align: right; font-size: .95rem; }
+dl.lines .tot { font-weight: 600; color: var(--ink); }
+.note { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; font-size: .9rem; line-height: 1.55; }
+.note.ok { background: var(--ok-bg); color: var(--ok); }
+.note.warn { background: var(--warn-bg); color: var(--warn); }
+.note.bad { background: var(--bad-bg); color: var(--bad); }
+.note.info { background: var(--accent-soft); color: var(--ink); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.btn { font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 9px 16px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: .85rem; letter-spacing: .02em; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.n, th.n { text-align: right; font-family: var(--font-num); font-variant-numeric: tabular-nums; padding-right: 0; padding-left: 10px; }
+.bar { display: block; height: 6px; background: var(--accent-soft); border-radius: 3px; min-width: 80px; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+ol.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 10px; }
+ul.facts { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
+.mono { font-family: var(--font-num); font-size: .92em; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 20px; }
+summary { cursor: pointer; font-weight: 600; }
+.rates { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-top: 14px; }
+.rates .field { margin: 0; }
+footer { color: var(--muted); font-size: .84rem; }
+footer a { color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .big { transition: color .2s; } }
+[hidden]{display:none!important}
+img{max-width:100%}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>সাবমিটার বিল ক্যালকুলেটর</h1>
+    <p>DPDC প্রিপেইড মিটারের মাসিক খরচ থেকে ভাড়াটিয়ার ন্যায্য বিদ্যুৎ বিল বের করুন। টিয়ার আর ফিক্সড চার্জ আলাদা করে গুনতে হয় না।</p>
+  </header>
+
+  <div class="sample" id="sampleBar">
+    <span>এখন বসানো মেইন মিটারের সংখ্যা আপনার প্যানেলের ২–১৮ অক্টোবরের। ভাড়াটিয়ার ইউনিট নমুনা।</span>
+    <button type="button" id="clearBtn">ফাঁকা করে নিজের সংখ্যা দিন</button>
+  </div>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="inH">
+      <h2 id="inH">এই মাসের সংখ্যা</h2>
+
+      <div class="field">
+        <label for="month">মাস</label>
+        <input type="text" id="month" value="অক্টোবর ২০২৬" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="mainUnits">মেইন মিটারের মোট ইউনিট (kWh)</label>
+        <input type="number" id="mainUnits" inputmode="decimal" step="any" min="0" value="52.05">
+        <span class="hint">DPDC অ্যাপ, Billing History, Charges, Last Month। Usage কলামের সব এন্ট্রির যোগফল।</span>
+      </div>
+      <div class="field">
+        <label for="panelTotal">প্যানেল থেকে কাটা মোট টাকা (৳)</label>
+        <input type="number" id="panelTotal" inputmode="decimal" step="any" min="0" value="397.78">
+        <span class="hint">একই এন্ট্রিগুলোর Amount কলামের যোগফল। ডিমান্ড চার্জ আর মিটার ভাড়াসহ।</span>
+      </div>
+      <div class="field">
+        <label for="tenantUnits">ভাড়াটিয়ার সাবমিটারের ইউনিট (kWh)</label>
+        <input type="number" id="tenantUnits" inputmode="decimal" step="any" min="0" value="18">
+        <span class="hint">মাস শেষের রিডিং থেকে মাস শুরুর রিডিং বিয়োগ।</span>
+      </div>
+      <div class="field" id="fixedField" hidden>
+        <label for="fixed">এই সময়ে কাটা ফিক্সড চার্জ (৳)</label>
+        <input type="number" id="fixed" inputmode="decimal" step="any" min="0" value="124">
+        <span class="hint">ডিমান্ড চার্জ ৮৪ (২ কিলোওয়াট × ৪২) আর মিটার ভাড়া ৪০, মোট ১২৪, মাসে একবার কাটে। তারিখ বদলাতে পারে, তাই দৈনিক এন্ট্রিতে যতবার কাটা দেখছেন তত দিন। কাটা না পড়লে ০।</span>
+      </div>
+
+      <fieldset>
+        <div class="legend">ফিক্সড চার্জ কীভাবে ভাগ হবে</div>
+        <label class="radio"><input type="radio" name="fixmode" value="share" checked><span>ইউনিটের অনুপাতে<small>ভাড়াটিয়া যত শতাংশ ইউনিট ব্যবহার করেছে, প্যানেলের মোট টাকার তত শতাংশ দেবে। ফিক্সড চার্জ আলাদা দিতে হয় না।</small></span></label>
+        <label class="radio"><input type="radio" name="fixmode" value="half"><span>সমান অর্ধেক<small>ভাড়াটিয়া ফিক্সড চার্জের অর্ধেক দেবে, বাকি এনার্জি চার্জ ইউনিটের অনুপাতে। এই অপশনে ফিক্সড চার্জের ঘর আসবে।</small></span></label>      </fieldset>
+    </section>
+
+    <section class="card result" aria-labelledby="outH" aria-live="polite">
+      <h2 id="outH">ভাড়াটিয়ার বিল <span id="resMonth" style="font-weight:400;color:var(--muted)"></span></h2>
+      <div id="resBody"></div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="slabH">
+    <h2 id="slabH">মেইন মিটার কোন টিয়ারে কত</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>টিয়ার (ইউনিট/মাস)</th><th class="n">রেট</th><th class="n">ইউনিট</th><th class="n">টাকা</th><th style="min-width:90px"></th></tr></thead>
+        <tbody id="slabBody"></tbody>
+      </table>
+    </div>
+    <div id="slabNote"></div>
+  </section>
+
+  <footer>ট্যারিফ সূত্র: <a href="https://www.thedailystar.net/news/environment/natural-resources/energy/news/berc-withdraws-electricity-price-hike-low-use-residential-consumers-4190646" target="_blank" rel="noopener">The Daily Star</a>, <a href="https://bangla.bdnews24.com/business/a92eb5b600a5" target="_blank" rel="noopener">bdnews24</a>, <a href="https://www.ittefaq.com.bd/791781/%E0%A6%AC%E0%A6%BF%E0%A6%A6%E0%A7%8D%E0%A6%AF%E0%A7%81%E0%A6%A4%E0%A7%87%E0%A6%B0-%E0%A6%A8%E0%A6%A4%E0%A7%81%E0%A6%A8-%E0%A6%AE%E0%A7%82%E0%A6%B2%E0%A7%8D%E0%A6%AF%E0%A6%B9%E0%A6%BE%E0%A6%B0-%E0%A6%98%E0%A7%8B%E0%A6%B7%E0%A6%A3%E0%A6%BE-%E0%A6%97%E0%A7%8D%E0%A6%B0%E0%A6%BE%E0%A6%B9%E0%A6%95-%E0%A6%AA%E0%A6%B0%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A7%9F%E0%A7%87" target="_blank" rel="noopener">ইত্তেফাক</a>। এটি আইনি বা আর্থিক পরামর্শ নয়।</footer>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var SLAB_LABELS = ['০–৭৫', '৭৬–২০০', '২০১–৩০০', '৩০১–৪০০', '৪০১–৬০০', '৬০০ এর বেশি'];
+  var CAPS = [75, 200, 300, 400, 600, Infinity];
+  var DEFAULT_RATES = { life: 4.63, slabs: [5.26, 8.5, 9.1, 9.62, 15.01, 17.35] };
+  var rates = DEFAULT_RATES;
+  var KEY = 'submeter-bill-v1';
+  var FIELDS = ['month', 'mainUnits', 'panelTotal', 'tenantUnits', 'fixed'];
+
+  function num(v) { var n = parseFloat(v); return isFinite(n) && n >= 0 ? n : 0; }
+  function money(n) { return '৳' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function units(n) { return n.toLocaleString('en-US', { maximumFractionDigits: 2 }); }
+
+  function energy(u) {
+    var rows = [], total = 0;
+    if (u <= 0) return { rows: rows, total: 0 };
+    if (u <= 50) {
+      var a = u * rates.life;
+      rows.push({ label: 'লাইফলাইন ০–৫০', units: u, rate: rates.life, amt: a });
+      return { rows: rows, total: a };
+    }
+    var prev = 0;
+    for (var i = 0; i < CAPS.length && prev < u; i++) {
+      var take = Math.min(u, CAPS[i]) - prev;
+      var amt = take * rates.slabs[i];
+      rows.push({ label: SLAB_LABELS[i], units: take, rate: rates.slabs[i], amt: amt });
+      total += amt;
+      prev = CAPS[i];
+    }
+    return { rows: rows, total: total };
+  }
+
+  function render() {
+    var main = num($('mainUnits').value);
+    var panel = num($('panelTotal').value);
+    var tenant = num($('tenantUnits').value);
+    var fixed = num($('fixed').value);
+    var mode = document.querySelector('input[name=fixmode]:checked').value;
+    var useFixed = mode !== 'share';
+    $('fixedField').hidden = !useFixed;
+    var body = $('resBody');
+    $('resMonth').textContent = $('month').value ? '· ' + $('month').value : '';
+
+    renderSlabs(main, panel);
+
+    if (main <= 0) {
+      body.innerHTML = '<div class="note info">মেইন মিটারের ইউনিট আর প্যানেলের মোট টাকা দিলে বিল এখানে দেখা যাবে।</div>';
+      return;
+    }
+    if (tenant > main) {
+      body.innerHTML = '<div class="note bad">সাবমিটারের ইউনিট মেইন মিটারের মোটের চেয়ে বেশি হতে পারে না। রিডিং বা মাসের সীমা মিলিয়ে দেখুন।</div>';
+      return;
+    }
+    var share = tenant / main;
+    var energyTotal = useFixed ? Math.max(0, panel - fixed) : panel;
+    var tEnergy = energyTotal * share;
+    var tFixed = useFixed ? fixed / 2 : 0;
+    var tTotal = tEnergy + tFixed;
+    var avg = energyTotal / main;
+    var rounded = Math.round(tTotal);
+    var ownUnits = main - tenant;
+    var ownCost = panel - tTotal;
+
+    var impliedFixed = Math.max(0, panel - energy(main).total);
+    var sepTotal = energy(tenant).total + (useFixed ? tFixed : impliedFixed * share);
+    var gap = tTotal - sepTotal;
+
+    var html = '';
+    html += '<div class="big">৳' + rounded.toLocaleString('en-US') + '</div>';
+    html += '<div class="sub">হিসাবে ' + money(tTotal) + '। নিকটতম টাকায় ধরা হয়েছে।</div>';
+    html += '<dl class="lines">';
+    html += '<dt>ভাড়াটিয়ার অংশ</dt><dd>' + units(tenant) + ' ÷ ' + units(main) + ' = ' + (share * 100).toFixed(1) + '%</dd>';
+    if (useFixed) {
+      html += '<dt>গড় এনার্জি রেট</dt><dd>' + money(avg) + '/kWh</dd>';
+      html += '<dt>এনার্জি চার্জ</dt><dd>' + money(tEnergy) + '</dd>';
+      html += '<dt>ফিক্সড চার্জের অংশ</dt><dd>' + money(tFixed) + '</dd>';
+    } else {
+      html += '<dt>গড় রেট (সব চার্জসহ)</dt><dd>' + money(avg) + '/kWh</dd>';
+    }
+    html += '<dt class="tot">ভাড়াটিয়ার বিল</dt><dd class="tot">' + money(tTotal) + '</dd>';
+    html += '<dt>আপনার নিজের ইউনিট</dt><dd>' + units(ownUnits) + ' kWh</dd>';
+    html += '<dt>আপনার নিজের খরচ</dt><dd>' + money(ownCost) + '</dd>';
+    html += '</dl>';
+
+    if (useFixed && panel > 0 && panel < fixed) {
+      html += '<div class="note warn">মোট টাকা ফিক্সড চার্জের চেয়ে কম। এই সময়ে ফিক্সড চার্জ কাটা না পড়লে ঘরে ০ দিন।</div>';
+    }
+    if (gap > 0.5 && tenant > 0) {
+      html += '<div class="note info">ভাড়াটিয়াকে আলাদা গ্রাহক ধরে ০ থেকে টিয়ার গুনলে বিল হতো ' + money(sepTotal) + '। তাতে আপনার ' + money(gap) + ' লোকসান হতো।</div>';
+    }
+    html += '<div class="actions"><button type="button" class="btn" id="copyBtn">বিলের লেখা কপি করুন</button><span class="hint" id="copyMsg" style="align-self:center"></span></div>';
+    body.innerHTML = html;
+
+    $('copyBtn').addEventListener('click', function () {
+      var txt = 'বিদ্যুৎ বিল' + ($('month').value ? ' (' + $('month').value + ')' : '') + '\n' +
+        'সাবমিটার ইউনিট: ' + units(tenant) + ' kWh\n' +
+        'গড় রেট: ' + money(avg) + '/kWh\n' +
+        (useFixed ? 'এনার্জি চার্জ: ' + money(tEnergy) + '\n' + 'ফিক্সড চার্জের অংশ: ' + money(tFixed) + '\n' : '') +
+        'মোট: ৳' + rounded.toLocaleString('en-US');
+      copyText(txt);
+    });
+    save();
+  }
+
+  function copyText(txt) {
+    var msg = $('copyMsg');
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      msg.textContent = ok ? 'কপি হয়েছে' : 'কপি করা যায়নি, লেখাটি নিজে বেছে নিন';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () { msg.textContent = 'কপি হয়েছে'; }, fallback);
+    } else { fallback(); }
+  }
+
+  function renderSlabs(main, panel) {
+    var e = energy(main);
+    var tb = $('slabBody');
+    if (main <= 0) { tb.innerHTML = '<tr><td colspan="5" class="hint">মেইন মিটারের ইউনিট দিলে এখানে টিয়ার ভাগ দেখাবে।</td></tr>'; $('slabNote').innerHTML = ''; return; }
+    var h = '';
+    e.rows.forEach(function (r) {
+      h += '<tr><td>' + r.label + '</td><td class="n">' + r.rate.toFixed(2) + '</td><td class="n">' + units(r.units) +
+        '</td><td class="n">' + r.amt.toFixed(2) + '</td><td><span class="bar"><i style="width:' + Math.min(100, r.units / main * 100).toFixed(0) + '%"></i></span></td></tr>';
+    });
+    h += '<tr><td><strong>এনার্জি মোট</strong></td><td class="n"></td><td class="n"><strong>' + units(main) + '</strong></td><td class="n"><strong>' + e.total.toFixed(2) + '</strong></td><td></td></tr>';
+    tb.innerHTML = h;
+
+    var imp = panel - e.total;
+    var k = Math.round(imp / 124);
+    var n = '';
+    if (panel > 0) {
+      if (imp >= -1 && k >= 0 && Math.abs(imp - k * 124) <= 1) {
+        n = '<div class="note ok">প্যানেলের মোট ' + money(panel) + ' থেকে ট্যারিফ অনুযায়ী এনার্জি ' + money(e.total) + ' বাদ দিলে থাকে ' + money(Math.max(0, imp)) + '। এটা ফিক্সড চার্জ (১২৪ × ' + k + ' বার)। হিসাব মিলেছে।</div>';
+      } else {
+        n = '<div class="note warn">প্যানেলের মোট ' + money(panel) + ' থেকে ট্যারিফ অনুযায়ী এনার্জি ' + money(e.total) + ' বাদ দিলে থাকে ' + money(imp) + ', যা ১২৪-এর গুণিতক নয়। যোগফলে ভুল বা বাদ পড়া এন্ট্রি, অথবা বকেয়া জাতীয় অন্য চার্জ থাকতে পারে। বিল প্যানেলের টাকা ধরেই হয়।</div>';
+      }
+    }
+    $('slabNote').innerHTML = '<div style="margin-top:12px">' + n + '</div>' +
+      (main <= 50 ? '<div class="note info" style="margin-top:10px">মাসে ৫০ ইউনিট বা কম হলে পুরোটাই লাইফলাইন রেটে। ৫০ পার হলে পুরো ইউনিট ০–৭৫ টিয়ারের রেট থেকে ধরা হয়।</div>' : '');
+  }
+
+  function save() {
+    try {
+      var data = { mode: document.querySelector('input[name=fixmode]:checked').value };
+      FIELDS.forEach(function (f) { data[f] = $(f).value; });
+      localStorage.setItem(KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      FIELDS.forEach(function (f) { if (typeof d[f] === 'string') $(f).value = d[f]; });
+      if (d.mode) { var r = document.querySelector('input[name=fixmode][value=' + d.mode + ']'); if (r) r.checked = true; }
+      if (d.mainUnits !== '52.05' || d.tenantUnits !== '18') $('sampleBar').hidden = true;
+    } catch (e) {}
+  }
+
+  load();
+  FIELDS.forEach(function (f) { $(f).addEventListener('input', render); });
+  document.querySelectorAll('input[name=fixmode]').forEach(function (r) { r.addEventListener('change', render); });
+  $('clearBtn').addEventListener('click', function () {
+    ['mainUnits', 'panelTotal', 'tenantUnits'].forEach(function (f) { $(f).value = ''; });
+    $('sampleBar').hidden = true;
+    $('mainUnits').focus();
+    render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>

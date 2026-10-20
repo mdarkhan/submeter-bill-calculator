@@ -1,0 +1,8 @@
+{
+  "name": "submeter-bill-calculator",
+  "version": "1.0.0",
+  "description": "DPDC prepaid meter submeter tenant electricity bill calculator",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
